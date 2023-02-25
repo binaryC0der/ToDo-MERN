@@ -1,11 +1,12 @@
 const asyncHandler = require("express-async-handler");
 const Goal = require("../models/goals.js");
+const User = require("../models/users.js");
 
 //* @desc : Get Goals
 //* @route : GET /api/goals
 //* @access : Private
 const getGoals = asyncHandler(async (req, res) => {
-  const goals = await Goal.find();
+  const goals = await Goal.find({ user: req.user.id });
   res.status(200).json(goals);
 });
 
@@ -19,6 +20,7 @@ const setGoals = asyncHandler(async (req, res) => {
   } else {
     const goal = await Goal.create({
       text: req.body.text,
+      user: req.user.id,
     });
     res.status(200).json(goal);
   }
@@ -33,10 +35,25 @@ const updateGoals = asyncHandler(async (req, res) => {
   if (!goal) {
     res.status(400);
     throw new Error("Goal Not Found");
-  } else {
-    const updatedGoal = await Goal.findByIdAndUpdate(id,req.body,{new:true});
-    res.status(200).json(updatedGoal);
   }
+  const user = await User.findById(req.user.id);
+
+  //Check if a user exists
+  if (!user) {
+    res.status(401);
+    throw new Error("User not found");
+  }
+
+  //Make sure the logged in user matches the author of the given goal
+  if (goal.user.toString() !== user._id) {
+    res.status(401);
+    throw new Error("User not authorized");
+  }
+
+  const updatedGoal = await Goal.findByIdAndUpdate(id, req.body, {
+    new: true,
+  });
+  res.status(200).json(updatedGoal);
 });
 
 //* @desc : Delete Goals
@@ -45,14 +62,25 @@ const updateGoals = asyncHandler(async (req, res) => {
 const deleteGoals = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const goal = await Goal.findById(id);
-  if(!goal){
+  if (!goal) {
     res.status(400);
     throw new Error("Goal Not Found");
   }
-  else {
-    await goal.remove();
-    res.status(200).json({id});
+  const user = await User.findById(req.user.id);
+
+  //Check if a user exists
+  if (!user) {
+    res.status(401);
+    throw new Error("User not found");
   }
+
+  //Make sure the logged in user matches the author of the given goal
+  if (goal.user.toString() !== user._id) {
+    res.status(401);
+    throw new Error("User not authorized");
+  }
+  await goal.remove();
+  res.status(200).json({ id });
 });
 
 module.exports = {

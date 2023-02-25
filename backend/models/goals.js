@@ -8,6 +8,11 @@ const goalSchema = new Schema(
       type: String,
       required: [true, "Please add a text field."],
     },
+    user:{
+      type:mongoose.Schema.Types.ObjectId,
+      required:true,
+      ref:"User",
+    }
   },
   { timestamps: true }
 );
