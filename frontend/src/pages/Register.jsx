@@ -1,23 +1,57 @@
 import { useState, useEffect } from "react";
+import {useSelector,useDispatch} from "react-redux";
+import {useNavigate} from "react-router-dom";
+import {toast} from "react-toastify";
+import { register,reset } from "../features/auth/authSlice";
 import { FaUser } from "react-icons/fa";
+import Spinner from "../components/Spinner";
 function Register() {
   const [formdata, setformdata] = useState({
+    name: "",
     email: "",
     password: "",
+    password2: "",
   });
 
-  const { email, password } = formdata;
+  const { name, email, password, password2 } = formdata;
+  
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const {user,isLoading,isError, isSuccess, message} = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if(isError){
+      toast.error(message);
+    }
+    if(isSuccess || user){
+      navigate("/");
+    }
+    dispatch(reset());
+  },[user,isSuccess,isError,message,navigate,dispatch]);
 
   const onChange = (event) => {
-    setformdata((prevState) => ({
+    setformdata((prevState => ({
       ...prevState,
-      [event.target.name]: event.target.value,
-    }));
+      [event.target.name] : event.target.value,
+    })))
   };
 
   const onSubmit = (e) => {
     e.preventDefault();
+
+    if(password !== password2){
+      toast.error("Passwords do not match!");
+    }
+    else {
+      const userData = {
+        name,email,password
+      }
+      dispatch(register(userData));
+    }
   };
+
+  if(isLoading)
+  return <Spinner/>;
 
   return (
     <>
@@ -29,6 +63,17 @@ function Register() {
       </section>
       <section className="form">
         <form onSubmit={onSubmit}>
+          <div className="form-group">
+            <input
+              type="text"
+              className="form-control"
+              id="name"
+              name="name"
+              value={name}
+              placeholder="Name"
+              onChange={onChange}
+            />
+          </div>
           <div className="form-group">
             <input
               type="email"
@@ -48,6 +93,17 @@ function Register() {
               name="password"
               value={password}
               placeholder="Password"
+              onChange={onChange}
+            />
+          </div>
+          <div className="form-group">
+            <input
+              type="password"
+              className="form-control"
+              id="password2"
+              name="password2"
+              value={password2}
+              placeholder="Confirm Password"
               onChange={onChange}
             />
           </div>

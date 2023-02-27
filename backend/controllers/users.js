@@ -74,13 +74,8 @@ const loginUser = asyncHandler(async (req, res) => {
 //* @route : GET /api/users/me
 //* @access : Private
 const getMe = asyncHandler(async (req, res) => {
-  const { id } = req.user; //We are able to access id because we have set user in our auth middleware
-  const { _id, email, name } = await User.findById(id);
-  res.status(200).json({
-    id: _id,
-    email,
-    name,
-  });
+  //We are able to access id because we have set user in our auth middleware
+  res.status(200).json(req.user);
 });
 
 module.exports = {
